@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package topo;
+
+option go_package = "github.com/p3rdy/bgpemu/proto/topo";
+
+// Topology message defines what nodes and links will be created
+// inside the mesh.
+message Topology {
+    string name = 1;  // Name of the topology - will be linked to the cluster name
+    repeated Node nodes = 2;  // List of nodes in the topology
+    repeated Link links = 3;  // connections between Nodes.
+    repeated Interface ints = 4;    //List of interface to be exported out of a topo, optional.
+  }
+
+message Node {
+    enum Type{
+        UNKNOWN = 0;
+        HOST = 1;
+        BGPNODE = 2;
+        SUBTOPO = 3;
+    }
+    string name = 1;
+    Type type = 2;
+    optional string path =3;    //Path of subtopo's definition file.
+    Config config = 4;
+}
+
+message Link {
+  string node_a = 1;
+  string int_a = 2;
+  string node_b = 3;
+  string int_b = 4;
+}
+//If this is a subtopo, interface message define how internal interfaces be exported.
+message Interface {
+    string node = 1;  //node name
+    string node_int = 2;  //node int name
+    string export = 3;  //export int name
+}  
+
+// Config is the k8s pod specific configuration for a node.
+message Config {
+  repeated string command = 1;  // Command to pass into pod.
+  repeated string args = 2;     // Command args to pass into the pod.
+  string image = 3;             // Docker image to use with pod.
+  // Map of environment variables to pass into the pod.
+  map<string, string> env = 4;
+  // Specific entry point command for accessing the pod.
+  string entry_command = 5;
+  // Mount point for configuration inside the pod.
+  string config_path = 6;
+  // Default configuration file name for the pod.
+  string config_file = 7;
+  uint32 sleep = 8;  // Sleeptime before starting the pod.
+  string file = 9;  // File is always relative to the topology configuration file.
+  repeated Task tasks = 12; 
+  map<string, string> extra_images = 13;
+  repeated string share_volumes= 14;
+  map<string,PublicVolumes> container_volumes = 15;
+}
+
+message PublicVolumes {
+  repeated string volumes = 1;
+  repeated string paths = 2;
+}
+message Task {
+  string container = 1;
+  repeated string cmds = 2; 
+}
